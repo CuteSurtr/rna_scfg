@@ -1,0 +1,16 @@
+>yeast_tRNA_Phe 76nt — classical cloverleaf (Sprinzl database reference)
+GCGGAUUUAGCUCAGUUGGGAGAGCGCCAGACUGAAGAUCUGGAGGUCCUGUGUUCGAUCCACAGAAUUCGCA
+>yeast_tRNA_Phe_structure dot-bracket
+(((((((..((((........)))).(((((.......))))).....(((((.......))))))))))))....
+>small_hairpin 17nt — CUUCGG tetraloop
+GCCAAAGCUUCGGCUUUGGC
+>small_hairpin_structure
+((((.((......)).))))
+>simple_stem 12nt
+GCGCAAAAGCGC
+>simple_stem_structure
+((((....))))
+>two_hairpin 22nt — two independent stems
+GCAAAAGCACGGCAAAAGCGCC
+>two_hairpin_structure
+((....))((((......))))
