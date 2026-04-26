@@ -22,7 +22,7 @@ def vienna_fold(sequence: str) -> Tuple[float, str]:
 
 
 def vienna_bp_probabilities(sequence: str):
-    """Return an n×n matrix of base-pair probabilities from ViennaRNA's
+    """Return an nxn matrix of base-pair probabilities from ViennaRNA's
     partition function (upper-triangle; symmetric fill)."""
     import numpy as np
 

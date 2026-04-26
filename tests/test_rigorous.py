@@ -1,5 +1,5 @@
 """Stronger correctness tests:
-* Inside probability = Σ over all parse trees of product of rule probs.
+* Inside probability = Sigma over all parse trees of product of rule probs.
 * Supervised SCFG training recovers the 4-bp stem exactly.
 * Supervised CYK beats untrained CYK on the held-out hairpin.
 * Turner 2004 stacking table is symmetric and negative on WC stacks.
@@ -137,9 +137,9 @@ def test_supervised_training_improves_cyk_on_held_out_stem():
     untrained = SCFGParams()
     trained = train_from_labeled(train, pseudo=0.5)
     held_out = "GGCGCAAAAGCGCC"  # similar stem, 14 nt
-    # Untrained CYK — will over-pair.
+    # Untrained CYK -- will over-pair.
     _, s_untrained = cyk(held_out, untrained)
-    # Trained CYK — should favor a single outer stem around 4 pairs.
+    # Trained CYK -- should favor a single outer stem around 4 pairs.
     _, s_trained = cyk(held_out, trained)
     pairs_u = dotbracket_to_pairs(s_untrained)
     pairs_t = dotbracket_to_pairs(s_trained)

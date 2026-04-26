@@ -11,7 +11,7 @@ def nussinov_dp(sequence: str, min_loop: int = 3) -> np.ndarray:
     Enforces a minimum hairpin loop size of ``min_loop`` (no pair (i, j)
     unless j - i > min_loop).
 
-    Complexity: O(n³) time, O(n²) space.
+    Complexity: O(n^3) time, O(n^2) space.
     """
     n = len(sequence)
     dp = np.zeros((n, n), dtype=int)

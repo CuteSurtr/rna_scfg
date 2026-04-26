@@ -97,7 +97,7 @@ def zuker_mfe(sequence: str, min_hairpin: int = 3, max_loop: int = 30) -> Tuple[
                             multi = cand
                 V[i, j] = min(hp, stack, internal, multi)
 
-            # WM recurrence — at least one branch, possibly preceded/followed
+            # WM recurrence -- at least one branch, possibly preceded/followed
             # by unpaired bases and/or more branches.
             best_wm = INF
             # branch = V(p, q) enclosing a helix, charged _MULTI_C
@@ -207,7 +207,7 @@ def zuker_traceback(sequence: str, V: np.ndarray, W: np.ndarray, WM: np.ndarray,
                     tb_WM(i + 1, k)
                     tb_WM(k + 1, j - 1)
                     return
-        # else: hairpin — nothing more to trace.
+        # else: hairpin -- nothing more to trace.
 
     def tb_WM(i: int, j: int) -> None:
         if i > j:

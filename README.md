@@ -2,6 +2,10 @@
 
 A from scratch library of classical RNA secondary structure prediction algorithms. The library implements the full stack of methods that define the field, from Nussinov base pair maximization through Zuker thermodynamic folding with Turner 2004 nearest neighbor parameters, through the McCaskill partition function with base pair probabilities computed by Inside and Outside, into the Knudsen Hein stochastic context free grammar with Inside, Outside, CYK, Inside Outside expectation maximization, and supervised maximum likelihood training. Every algorithm is validated against brute force enumeration on small sequences and, where possible, against the ViennaRNA reference implementation.
 
+**Tests:** 19 passing in <1 s. **License:** MIT.
+
+![rnafold demo](results/rnafold_demo.png)
+
 ## Foundations
 
 RNA secondary structure is the set of base pairs that form in a folded RNA molecule. The classical abstraction treats these as nested non crossing matchings with Watson Crick plus wobble pairing rules, ignoring pseudoknots. Given a primary sequence on four nucleotides A, C, G, and U, the prediction problem is to find the biologically correct nested pairing. The mathematical toolkit that the library develops works at four levels of sophistication. At the combinatorial level, Nussinov 1978 showed that maximizing the number of base pairs is solvable in cubic time by dynamic programming. At the thermodynamic level, Zuker 1981 replaced pair counts with free energy using the Turner nearest neighbor model and introduced the V and W matrix decomposition that is still standard. At the statistical mechanics level, McCaskill 1990 replaced minimization with a sum over the Boltzmann ensemble, giving an inside outside recurrence that yields the probability of any particular base pair forming across all folded states. At the formal language level, Sakakibara 1994 and Eddy and Durbin 1994 introduced stochastic context free grammars as a natural generalization of hidden Markov models for sequences with long range correlations, culminating in the unambiguous Knudsen Hein 1999 grammar whose parse tree corresponds one to one with a secondary structure.

@@ -50,7 +50,7 @@ def main() -> None:
     records = load_known_structures(DATA / "rna_known_structures.fasta")
     print(f"loaded {len(records)} RNA records from data/")
 
-    section("1. Nussinov — max base-pair matching")
+    section("1. Nussinov -- max base-pair matching")
     for name, seq, known in records:
         if "_structure" in name:
             continue
@@ -61,7 +61,7 @@ def main() -> None:
         if known:
             print(f"    true: {known[:len(seq)]}")
 
-    section("2. Zuker MFE — thermodynamic folding")
+    section("2. Zuker MFE -- thermodynamic folding")
     zuker_results = {}
     for name, seq, known in records:
         if "_structure" in name:
@@ -77,7 +77,7 @@ def main() -> None:
             sens = overlap / max(len(known_pairs), 1)
             print(f"    sensitivity (true pairs recovered): {sens:.1%}")
 
-    section("3. McCaskill — partition function + base-pair probabilities")
+    section("3. McCaskill -- partition function + base-pair probabilities")
     for name, seq, known in records[:2]:
         if "_structure" in name:
             continue
@@ -85,7 +85,7 @@ def main() -> None:
         P = bp_probabilities(seq)
         print(f"  {name.split()[0]:<20} Z = {Z:.4e}   max P(i,j) = {P.max():.3f}")
 
-    section("4. SCFG CYK — Knudsen-Hein grammar, default parameters")
+    section("4. SCFG CYK -- Knudsen-Hein grammar, default parameters")
     params = SCFGParams()
     for name, seq, known in records[:3]:
         if "_structure" in name:
@@ -96,7 +96,7 @@ def main() -> None:
         if known:
             print(f"    true: {known[:len(seq)]}")
 
-    section("4b. SCFG — untrained vs supervised-trained CYK")
+    section("4b. SCFG -- untrained vs supervised-trained CYK")
     from . import train_from_labeled
     labeled = [
         (rec[1], rec[2][: len(rec[1])])
@@ -125,13 +125,13 @@ def main() -> None:
             t_sens = len(t_pairs & true_pairs) / max(len(true_pairs), 1)
             print(f"    sensitivity  untrained={u_sens:.1%}  trained={t_sens:.1%}")
 
-    section("5. SCFG inside-outside EM — parameter estimation")
+    section("5. SCFG inside-outside EM -- parameter estimation")
     seqs = [rec[1] for rec in records if "_structure" not in rec[0]]
     fresh = SCFGParams()
     trained, ll = inside_outside_em(seqs, params=fresh, n_iters=10, verbose=False)
     print(f"  log-likelihood trace ({len(ll)} iters): "
-          f"{ll[0]:+.3f} → {ll[-1]:+.3f}")
-    print(f"  Δ log-lik = {ll[-1] - ll[0]:+.4f}  (monotone non-decreasing)")
+          f"{ll[0]:+.3f} -> {ll[-1]:+.3f}")
+    print(f"  Delta log-lik = {ll[-1] - ll[0]:+.4f}  (monotone non-decreasing)")
 
     section("6. External: ViennaRNA head-to-head MFE")
     try:
@@ -151,7 +151,7 @@ def main() -> None:
         print(f"  (skipped: {e})")
 
     if HAVE_MPL:
-        section("7. Figures → results/")
+        section("7. Figures -> results/")
         # Figure 1: method-by-method on the CUUCGG hairpin
         target_name, target_seq, target_struct = None, None, None
         for rec in records:

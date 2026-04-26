@@ -1,31 +1,31 @@
 """Stochastic Context-Free Grammars for RNA secondary structure.
 
-Implements the **Knudsen-Hein 1999** (KH99) grammar — an unambiguous
+Implements the **Knudsen-Hein 1999** (KH99) grammar -- an unambiguous
 SCFG whose parse tree corresponds one-to-one with a secondary structure.
 
 Grammar:
-    S → L S | L
-    L → s F s' | s
-    F → s F s' | L S
+    S -> L S | L
+    L -> s F s' | s
+    F -> s F s' | L S
 
 where:
   * `s` is a single-nucleotide emission from the "unpaired-base"
     distribution p_single(a) over {A, C, G, U}.
   * `s F s'` is a pair emission from the "paired" distribution
-    p_pair(a, a') over 4 × 4 possibilities. Only Watson-Crick + wobble
+    p_pair(a, a') over 4 x 4 possibilities. Only Watson-Crick + wobble
     pairs get non-trivial probability; others are near-zero.
 
 Algorithms implemented:
-  * **Inside α[i, j, N]** — total probability that N derives x_{i:j+1}.
-  * **Outside β[i, j, N]** — total probability that S derives x with
+  * **Inside alpha[i, j, N]** -- total probability that N derives x_{i:j+1}.
+  * **Outside beta[i, j, N]** -- total probability that S derives x with
     nonterminal N left in [i:j+1].
-  * **CYK γ[i, j, N]** — Viterbi analog: max probability over
+  * **CYK gamma[i, j, N]** -- Viterbi analog: max probability over
     derivations; plus traceback to produce the MAP parse tree.
-  * **Inside-Outside EM** — parameter re-estimation.
-  * **Structure extraction** — convert a parse tree to dot-bracket.
+  * **Inside-Outside EM** -- parameter re-estimation.
+  * **Structure extraction** -- convert a parse tree to dot-bracket.
 
 We index positions 0-based and use half-open intervals [i, j) with
-length j - i ≥ 1 to match the combinatorics cleanly.
+length j - i >= 1 to match the combinatorics cleanly.
 """
 
 from __future__ import annotations
@@ -47,12 +47,12 @@ class SCFGParams:
     """Parameters of the KH99 grammar. All probabilities (no log space).
 
     Rules (indexed in this order for EM bookkeeping):
-      0: S → L S
-      1: S → L
-      2: L → s F s'     (paired; sub-param: pair emission matrix)
-      3: L → s          (unpaired; sub-param: single emission vector)
-      4: F → s F s'     (continuing helix; pair emission)
-      5: F → L S
+      0: S -> L S
+      1: S -> L
+      2: L -> s F s'     (paired; sub-param: pair emission matrix)
+      3: L -> s          (unpaired; sub-param: single emission vector)
+      4: F -> s F s'     (continuing helix; pair emission)
+      5: F -> L S
     """
 
     p_rule: np.ndarray = field(
@@ -116,34 +116,34 @@ def _encode(seq: str) -> np.ndarray:
 
 
 def inside(seq: str, params: SCFGParams) -> np.ndarray:
-    """Compute α[i, j, N] = P(N ⇒* x_{i:j}) with half-open [i, j).
-    Shape (n+1, n+1, 3). α[i, j, N] = 0 if j ≤ i (empty derivation, not
-    permitted in this grammar — no ε rules)."""
+    """Compute alpha[i, j, N] = P(N =>* x_{i:j}) with half-open [i, j).
+    Shape (n+1, n+1, 3). alpha[i, j, N] = 0 if j <= i (empty derivation, not
+    permitted in this grammar -- no eps rules)."""
     x = _encode(seq)
     n = len(x)
     a = np.zeros((n + 1, n + 1, 3), dtype=float)
     # Length-1: emit a single nucleotide.
     for i in range(n):
-        a[i, i + 1, L_] = params.p_rule[3] * params.p_single[x[i]]   # L → s
-        a[i, i + 1, S_] = params.p_rule[1] * a[i, i + 1, L_]         # S → L
+        a[i, i + 1, L_] = params.p_rule[3] * params.p_single[x[i]]   # L -> s
+        a[i, i + 1, S_] = params.p_rule[1] * a[i, i + 1, L_]         # S -> L
         # F has no single-nucleotide rule, so a[_, _, F_] stays 0 here.
 
     for length in range(2, n + 1):
         for i in range(0, n - length + 1):
             j = i + length
-            # L → s F s'
+            # L -> s F s'
             if length >= 3:
                 a[i, j, L_] = params.p_rule[2] * params.p_pair[x[i], x[j - 1]] * a[i + 1, j - 1, F_]
-            # F → s F s'
+            # F -> s F s'
             if length >= 3:
                 a[i, j, F_] = params.p_rule[4] * params.p_pair[x[i], x[j - 1]] * a[i + 1, j - 1, F_]
-            # F → L S  (bifurcation)
+            # F -> L S  (bifurcation)
             if length >= 2:
                 a_F_LS = 0.0
                 for k in range(i + 1, j):
                     a_F_LS += a[i, k, L_] * a[k, j, S_]
                 a[i, j, F_] += params.p_rule[5] * a_F_LS
-            # S → L S
+            # S -> L S
             a_S_LS = 0.0
             for k in range(i + 1, j):
                 a_S_LS += a[i, k, L_] * a[k, j, S_]
@@ -155,52 +155,52 @@ def inside(seq: str, params: SCFGParams) -> np.ndarray:
 
 
 def outside(seq: str, params: SCFGParams, a: Optional[np.ndarray] = None) -> np.ndarray:
-    """Compute β[i, j, N] = probability that S ⇒* x, passing through N
+    """Compute beta[i, j, N] = probability that S =>* x, passing through N
     at [i, j)."""
     x = _encode(seq)
     n = len(x)
     if a is None:
         a = inside(seq, params)
     b = np.zeros((n + 1, n + 1, 3), dtype=float)
-    # Seed: β[0, n, S] = 1.
+    # Seed: beta[0, n, S] = 1.
     b[0, n, S_] = 1.0
 
-    # Outside recursion — fill in decreasing length (larger outer regions
+    # Outside recursion -- fill in decreasing length (larger outer regions
     # must be set before smaller inner ones).
     for length in range(n, 0, -1):
         for i in range(0, n - length + 1):
             j = i + length
 
-            # Contributions to β[i, j, S]:
-            # (a) via S → L S with S = outer, L = [i, k], S = [k, j] — but
-            # that's the ROOT rule; reverse-gives β for L at [i, k] from
-            # β of S at [i, j]. So the contribution to β[i, j, S] comes
-            # from where S appears as the right child of S → L S:
-            #   for k ≤ i:  β[i, j, S] += p_rule[0] · β[k, j, S] · α[k, i, L]
+            # Contributions to beta[i, j, S]:
+            # (a) via S -> L S with S = outer, L = [i, k], S = [k, j] -- but
+            # that's the ROOT rule; reverse-gives beta for L at [i, k] from
+            # beta of S at [i, j]. So the contribution to beta[i, j, S] comes
+            # from where S appears as the right child of S -> L S:
+            #   for k <= i:  beta[i, j, S] += p_rule[0] * beta[k, j, S] * alpha[k, i, L]
             for k in range(0, i):
                 b[i, j, S_] += params.p_rule[0] * b[k, j, S_] * a[k, i, L_]
-            # S at [i, j] as right child of F → L S:
+            # S at [i, j] as right child of F -> L S:
             for k in range(0, i):
                 b[i, j, S_] += params.p_rule[5] * b[k, j, F_] * a[k, i, L_]
 
-            # β[i, j, L]:
-            # L appears as left child of S → L S:  for k ≥ j
+            # beta[i, j, L]:
+            # L appears as left child of S -> L S:  for k >= j
             for k in range(j + 1, n + 1):
                 b[i, j, L_] += params.p_rule[0] * b[i, k, S_] * a[j, k, S_]
-            # L appears alone via S → L:
+            # L appears alone via S -> L:
             b[i, j, L_] += params.p_rule[1] * b[i, j, S_]
-            # L as left child of F → L S:
+            # L as left child of F -> L S:
             for k in range(j + 1, n + 1):
                 b[i, j, L_] += params.p_rule[5] * b[i, k, F_] * a[j, k, S_]
 
-            # β[i, j, F]:
-            # F appears inside L → s F s' at [i-1, j+1]:
+            # beta[i, j, F]:
+            # F appears inside L -> s F s' at [i-1, j+1]:
             if i - 1 >= 0 and j + 1 <= n:
                 b[i, j, F_] += (
                     params.p_rule[2] * params.p_pair[x[i - 1], x[j]]
                     * b[i - 1, j + 1, L_]
                 )
-            # F appears inside F → s F s':
+            # F appears inside F -> s F s':
             if i - 1 >= 0 and j + 1 <= n:
                 b[i, j, F_] += (
                     params.p_rule[4] * params.p_pair[x[i - 1], x[j]]
@@ -220,9 +220,9 @@ def cyk(seq: str, params: SCFGParams) -> Tuple[float, str]:
     x = _encode(seq)
     n = len(x)
     NEG = -np.inf
-    # γ in log space
+    # gamma in log space
     g = np.full((n + 1, n + 1, 3), NEG, dtype=float)
-    bp = {}  # backpointers: (i, j, N) → info for traceback
+    bp = {}  # backpointers: (i, j, N) -> info for traceback
 
     with np.errstate(divide="ignore"):
         log_rule = np.log(np.where(params.p_rule > 0, params.p_rule, 1e-300))
@@ -240,14 +240,14 @@ def cyk(seq: str, params: SCFGParams) -> Tuple[float, str]:
         for i in range(0, n - length + 1):
             j = i + length
 
-            # L → s F s'
+            # L -> s F s'
             if length >= 3:
                 cand = log_rule[2] + log_pair[x[i], x[j - 1]] + g[i + 1, j - 1, F_]
                 if cand > g[i, j, L_]:
                     g[i, j, L_] = cand
                     bp[(i, j, L_)] = ("rule_L_pair", i, j)
 
-            # F → s F s'
+            # F -> s F s'
             f_score = NEG
             f_choice = None
             if length >= 3:
@@ -255,7 +255,7 @@ def cyk(seq: str, params: SCFGParams) -> Tuple[float, str]:
                 if cand > f_score:
                     f_score = cand
                     f_choice = ("rule_F_pair", i, j)
-            # F → L S
+            # F -> L S
             for k in range(i + 1, j):
                 cand = log_rule[5] + g[i, k, L_] + g[k, j, S_]
                 if cand > f_score:
@@ -265,7 +265,7 @@ def cyk(seq: str, params: SCFGParams) -> Tuple[float, str]:
             if f_choice is not None:
                 bp[(i, j, F_)] = f_choice
 
-            # S → L S | L
+            # S -> L S | L
             s_score = NEG
             s_choice = None
             if g[i, j, L_] > NEG:
@@ -343,7 +343,7 @@ def structure_to_rules(seq: str, struct: str):
     structure because the grammar is unambiguous.
 
     Rule ids:
-      0 S→L S   1 S→L   2 L→s F s'   3 L→s   4 F→s F s'   5 F→L S
+      0 S->L S   1 S->L   2 L->s F s'   3 L->s   4 F->s F s'   5 F->L S
     """
     assert len(seq) == len(struct)
     x = _encode(seq)
@@ -360,22 +360,22 @@ def structure_to_rules(seq: str, struct: str):
         else:
             raise ValueError(f"unexpected char {struct[i]!r} at {i}")
         if motif_end == j:
-            # S → L  (single motif covers the whole span)
+            # S -> L  (single motif covers the whole span)
             events.append((1,))
             parse_L(i, j)
         else:
-            # S → L S
+            # S -> L S
             events.append((0,))
             parse_L(i, motif_end)
             parse_S(motif_end, j)
 
     def parse_L(i: int, j: int) -> None:
         if j - i == 1:
-            # L → s   (must be unpaired by construction)
+            # L -> s   (must be unpaired by construction)
             assert struct[i] == ".", f"parse_L on paired at {i}"
             events.append((3, "single", x[i]))
         else:
-            # L → s F s'   (paired block)
+            # L -> s F s'   (paired block)
             assert struct[i] == "(" and struct[j - 1] == ")", (i, j, struct[i], struct[j - 1])
             events.append((2, "pair", x[i], x[j - 1]))
             parse_F(i + 1, j - 1)
@@ -383,15 +383,15 @@ def structure_to_rules(seq: str, struct: str):
     def parse_F(i: int, j: int) -> None:
         # F covers the interior of a paired block.
         if i >= j:
-            # empty interior — shouldn't happen since min hairpin is 1
+            # empty interior -- shouldn't happen since min hairpin is 1
             return
         # Does the interior start with a paired block that closes at j-1?
         if struct[i] == "(" and _find_matching(struct, i) == j - 1:
-            # F → s F s'   (helix continues)
+            # F -> s F s'   (helix continues)
             events.append((4, "pair", x[i], x[j - 1]))
             parse_F(i + 1, j - 1)
         else:
-            # F → L S
+            # F -> L S
             events.append((5,))
             # Find the first motif end in [i, j).
             if struct[i] == ".":
@@ -400,7 +400,7 @@ def structure_to_rules(seq: str, struct: str):
                 first_motif_end = _find_matching(struct, i) + 1
             else:
                 # interior can start with ')' only if hairpin loop; but then
-                # the structure should have been consumed as F→s F s'. This
+                # the structure should have been consumed as F->s F s'. This
                 # branch handles the "all unpaired loop" case:
                 first_motif_end = j
             parse_L(i, first_motif_end)
@@ -471,7 +471,7 @@ def inside_outside_em(
             total_ll += np.log(Z)
 
             # For each rule, accumulate posterior expected count
-            # S → L S: for each i<k<j, α[i,k,L]·α[k,j,S]·β[i,j,S]·p_rule[0] / Z
+            # S -> L S: for each i<k<j, alpha[i,k,L]*alpha[k,j,S]*beta[i,j,S]*p_rule[0] / Z
             for length in range(2, n + 1):
                 for i in range(0, n - length + 1):
                     j = i + length
@@ -484,14 +484,14 @@ def inside_outside_em(
                             params.p_rule[5] * a[i, k, L_] * a[k, j, S_] * b[i, j, F_] / Z
                         )
                         rule_counts[5] += c
-            # S → L: α[i,j,L]·β[i,j,S]·p_rule[1]/Z
+            # S -> L: alpha[i,j,L]*beta[i,j,S]*p_rule[1]/Z
             for length in range(1, n + 1):
                 for i in range(0, n - length + 1):
                     j = i + length
                     c = params.p_rule[1] * a[i, j, L_] * b[i, j, S_] / Z
                     rule_counts[1] += c
 
-            # L → s F s': for length ≥ 3
+            # L -> s F s': for length >= 3
             for length in range(3, n + 1):
                 for i in range(0, n - length + 1):
                     j = i + length
@@ -507,7 +507,7 @@ def inside_outside_em(
                     )
                     rule_counts[4] += c_f
                     pair_counts[x[i], x[j - 1]] += c_f
-            # L → s (single): length-1 emissions
+            # L -> s (single): length-1 emissions
             for i in range(n):
                 c = params.p_rule[3] * params.p_single[x[i]] * b[i, i + 1, L_] / Z
                 rule_counts[3] += c

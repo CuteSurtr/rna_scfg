@@ -25,10 +25,10 @@ def inside_Z(sequence: str, RT: float = 1.0, min_loop: int = 3) -> np.ndarray:
     Recursion:
       Z(i, j) = 1                       if j < i or j - i < min_loop
       Z(i, j) = Z(i, j-1)               (j unpaired)
-              + Σ_{i ≤ k ≤ j - min_loop - 1} Z(i, k-1) · Z(k+1, j-1) · exp(-E(x_k, x_j)/RT)
+              + Sigma_{i <= k <= j - min_loop - 1} Z(i, k-1) * Z(k+1, j-1) * exp(-E(x_k, x_j)/RT)
                                           (j paired with some k)
 
-    Standard McCaskill recurrence — the k=j case corresponds to "i
+    Standard McCaskill recurrence -- the k=j case corresponds to "i
     unpaired, j unpaired" via the Z(i, j-1) term.
     """
     n = len(sequence)
@@ -44,7 +44,7 @@ def inside_Z(sequence: str, RT: float = 1.0, min_loop: int = 3) -> np.ndarray:
             j = i + length - 1
             # case: j unpaired
             total = Z[i, j - 1]
-            # case: j paired with some k ∈ [i, j - min_loop - 1]
+            # case: j paired with some k in [i, j - min_loop - 1]
             for k in range(i, j - min_loop):
                 if not can_pair(sequence[k], sequence[j]):
                     continue
@@ -68,19 +68,19 @@ def outside_Z(sequence: str, Z_in: np.ndarray, RT: float = 1.0, min_loop: int = 
     # Seed: outside of the full range is 1 (the empty context).
     Z_out[0, n - 1] = 1.0
 
-    # Fill decreasing in length — the outside recursion relies on larger
+    # Fill decreasing in length -- the outside recursion relies on larger
     # "surrounding" regions having already been filled.
     for length in range(n, 0, -1):
         for i in range(0, n - length + 1):
             j = i + length - 1
             # (1) j+1 unpaired: a larger structure [i, j+1] has j+1
-            # unpaired, contributing the outside of [i, j+1] · 1 to Z_out[i,j].
+            # unpaired, contributing the outside of [i, j+1] * 1 to Z_out[i,j].
             if j + 1 < n:
                 Z_out[i, j] += Z_out[i, j + 1]  # x_{j+1} unpaired
-            # (2) i-1 unpaired — there's no such direct contribution in the
+            # (2) i-1 unpaired -- there's no such direct contribution in the
             # standard outside recursion for this grammar; the symmetric
             # "i-1 unpaired" case is handled through (3).
-            # (3) A base pair (k, j+1) for some k ≤ i − 1, enclosing [i, j]:
+            # (3) A base pair (k, j+1) for some k <= i ? 1, enclosing [i, j]:
             if j + 1 < n:
                 for k in range(0, i):
                     if not can_pair(sequence[k], sequence[j + 1]):
@@ -98,7 +98,7 @@ def bp_probabilities(sequence: str, RT: float = 1.0, min_loop: int = 3) -> np.nd
     """Return P(i, j) = probability that (i, j) is paired in the Boltzmann
     ensemble, using the toy base-pair-only energy model.
 
-    P(i, j) = [Z_out(i, j) · Z_in(i+1, j-1) · exp(-E/RT)] / Z_total
+    P(i, j) = [Z_out(i, j) * Z_in(i+1, j-1) * exp(-E/RT)] / Z_total
     """
     n = len(sequence)
     Z = inside_Z(sequence, RT=RT, min_loop=min_loop)
@@ -120,6 +120,6 @@ def bp_probabilities(sequence: str, RT: float = 1.0, min_loop: int = 3) -> np.nd
 
 
 def mccaskill_partition(sequence: str, RT: float = 1.0, min_loop: int = 3) -> float:
-    """Total partition function — convenience wrapper returning Z[0, n-1]."""
+    """Total partition function -- convenience wrapper returning Z[0, n-1]."""
     Z = inside_Z(sequence, RT=RT, min_loop=min_loop)
     return float(Z[0, len(sequence) - 1])

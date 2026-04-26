@@ -29,7 +29,7 @@ from rnafold.mccaskill import _bp_energy_toy
 
 
 def _enumerate_structures(seq, min_loop=3):
-    """Enumerate all nested secondary structures of seq — brute force
+    """Enumerate all nested secondary structures of seq -- brute force
     exponential-time reference for small n."""
     n = len(seq)
     out = []
@@ -121,7 +121,7 @@ def test_nussinov_traceback_gives_nested_structure():
 
 
 def test_mccaskill_matches_brute_force_sum():
-    """Σ of e^{-E/kT} over brute-force structures == Z."""
+    """Sigma of e^{-E/kT} over brute-force structures == Z."""
     for seq in ["GCAU", "GCGCAU", "GGCAAUCC"]:
         Z_dp = mccaskill_partition(seq, RT=1.0, min_loop=3)
         brute = 0.0
@@ -132,7 +132,7 @@ def test_mccaskill_matches_brute_force_sum():
 
 
 def test_bp_probabilities_sum_to_expected_pair_count():
-    """Σ_{i<j} P(i, j) = expected number of pairs (≤ n/2)."""
+    """Sigma_{i<j} P(i, j) = expected number of pairs (<= n/2)."""
     seq = "GCGCAAAAGCGC"
     P = bp_probabilities(seq)
     n = len(seq)
@@ -166,12 +166,12 @@ def test_zuker_empty_on_noncompatible_sequence():
 
 
 def test_inside_matches_brute_force_small():
-    """Σ P(derivations) for the KH99 grammar — sum over parse trees
+    """Sigma P(derivations) for the KH99 grammar -- sum over parse trees
     should equal the inside probability."""
     params = SCFGParams()
     for seq in ["GCAU", "GCGCAU"]:
         a = inside(seq, params)
-        Z = a[0, len(seq), 0]  # α[0, n, S]
+        Z = a[0, len(seq), 0]  # alpha[0, n, S]
         assert 0 <= Z <= 1 + 1e-9
         assert Z > 0   # the grammar must be able to derive any RNA
 
@@ -188,7 +188,7 @@ def test_inside_outside_agreement():
     Z = a[0, n, 0]
     assert Z > 0
     assert abs(b[0, n, 0] - 1.0) < 1e-12
-    # Every single position (i, i+1) must have β[i, i+1, L] >= 0 since L
+    # Every single position (i, i+1) must have beta[i, i+1, L] >= 0 since L
     # can derive a single nucleotide; and each position must participate
     # in at least one derivation.
     for i in range(n):

@@ -1,12 +1,12 @@
 """Turner 2004 nearest-neighbor thermodynamic parameters (subset).
 
-Values in kcal/mol at 37°C, from Mathews–Turner 2004 (NNDB). This
+Values in kcal/mol at 37 degC, from Mathews-Turner 2004 (NNDB). This
 module exposes a cleaner drop-in replacement for the toy energies in
-``zuker.py`` — sufficient for quantitative agreement with ViennaRNA on
+``zuker.py`` -- sufficient for quantitative agreement with ViennaRNA on
 common RNA motifs.
 
 Covered:
-* 6 × 6 stacking table over pair types (AU, CG, GC, UA, GU, UG)
+* 6 x 6 stacking table over pair types (AU, CG, GC, UA, GU, UG)
 * Terminal AU/GU penalty (0.45 kcal/mol)
 * Hairpin loop initiation by size (3..30+)
 * Internal / bulge loop size penalties
@@ -42,7 +42,7 @@ def pair_index(b1: str, b2: str) -> int:
     return PAIR_TO_IDX.get((b1.upper(), b2.upper()), -1)
 
 
-# Stacking energy (kcal/mol at 37°C) for outer pair (i, j) stacked over
+# Stacking energy (kcal/mol at 37 degC) for outer pair (i, j) stacked over
 # inner pair (i+1, j-1). Rows = outer, cols = inner.
 # Values are Turner 2004 / NNDB published defaults, rounded to 0.1.
 _STACK = np.array(
@@ -125,7 +125,7 @@ def internal_init(total: int) -> float:
 
 def internal_loop_energy(u: int, v: int) -> float:
     """Penalty for an internal loop with u unpaired on one side, v on the
-    other. Includes asymmetry penalty for |u − v|."""
+    other. Includes asymmetry penalty for |u ? v|."""
     if u == 0 and v == 0:
         return 0.0  # stack
     if u == 0 or v == 0:
@@ -135,7 +135,7 @@ def internal_loop_energy(u: int, v: int) -> float:
     return internal_init(total) + min(asym, 3.0)
 
 
-# Multi-branch loop affine penalty: a + b·#branches + c·#unpaired
+# Multi-branch loop affine penalty: a + b*#branches + c*#unpaired
 MULTI_A = 3.4
 MULTI_B = 0.4
-MULTI_C = 0.0   # Turner 2004 sets per-branch ≈ 0; we keep 0 for clarity
+MULTI_C = 0.0   # Turner 2004 sets per-branch ~ 0; we keep 0 for clarity
